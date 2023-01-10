@@ -1,12 +1,6 @@
 package bloodbank;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.Statement;
-import java.util.*;
-import java.sql.Connection;
+import java.text.*;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,7 +8,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.*;
 
-public class Donor extends Database{
+public class Donor{
 	Scanner sc = new Scanner(System.in);
 	private String donorName;
 	private String address;
@@ -111,7 +105,7 @@ public class Donor extends Database{
 		Statement st=con.createStatement();
 		ResultSet rs = st.executeQuery("select * from bloodbank");
 		ResultSetMetaData rsmd = rs.getMetaData();
-	   	query="insert into bloodbank(";
+	   	String query="insert into bloodbank(";
 	   	String start = rsmd.getColumnName(2);
 	   	query = query+start;
 	   	int len = rsmd.getColumnCount(),i=3;
@@ -149,6 +143,7 @@ public class Donor extends Database{
 		}
     }
     public void displayAvailability() throws Exception{
+    	ExpiryDate ed = new ExpiryDate();
     	Class.forName("com.mysql.jdbc.Driver");
 		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/test","root","");
 		Statement st=con.createStatement();
@@ -159,7 +154,10 @@ public class Donor extends Database{
     	int count =0;
 		ResultSet rs = st.executeQuery("select * from bloodbank where bloodgroup='"+bloodGroups[i]+"'");
 		while(rs.next()) {
+			String currDate = rs.getDate("lastdonated").toString();
+			if(ed.checkForExpiry(currDate)) {
 			quantity += rs.getDouble("quantity");
+			}
 		}
 		units = getUnits(quantity);
 		System.out.println(bloodGroups[i]+"\t\t"+quantity+" L\t\t\t\t"+units+" units");
