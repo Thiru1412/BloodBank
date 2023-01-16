@@ -20,8 +20,9 @@ public class Donor{
 	private String bloodGroup;
 	private String lastDonated;
 	private double  bloodQuantity;
-	
+	int count = 0;
 	String[] bloodGroups = {"A+","A-","B+","B-","AB+","AB-","O+","O-"};
+	String[][] correspondingBloodGroup = {{"A+","A-","O+","O-"},{"A-","O-"},{"B+","B-","O+","O-"},{"B-","O-"},{"AB+","AB-","A+","A-","B+","B-","O+","O-"},{"AB-","A-","B-","O-"},{"O+","O-"},{"O-"}};
 	public void getDetails() {
 		System.out.print("Enter your name : ");
 		this.donorName = sc.nextLine();
@@ -100,8 +101,8 @@ public class Donor{
         this.pincode = sc.nextLine();
     }
     public void insertData() throws Exception{
-    	Class.forName("com.mysql.jdbc.Driver");
-		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/test","root","");
+		Class.forName("com.mysql.cj.jdbc.Driver");
+		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3307/bloodbank","root","Thirumalai_14");
 		Statement st=con.createStatement();
 		ResultSet rs = st.executeQuery("select * from bloodbank");
 		ResultSetMetaData rsmd = rs.getMetaData();
@@ -116,40 +117,69 @@ public class Donor{
 	   	}
 	   	query=query+") values('"+this.donorName+"','"+this.address+"','"+this.area+"','"+this.bloodGroup+"','";
 	   	query=query+this.district+"','"+this.state+"','"+this.pincode+"','"+this.phoneNumber+"','"+this.lastDonated+"',"+this.bloodQuantity+")";
-	   	System.out.println(query);
 	   	PreparedStatement ps = con.prepareStatement(query);
 	   	ps.execute();
+	   	System.out.println("Registered Successfully");
 	   	con.close();
     }
     public void displayData() throws Exception {
-    	Class.forName("com.mysql.jdbc.Driver");
-		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/test","root","");
+		Class.forName("com.mysql.cj.jdbc.Driver");
+		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3307/bloodbank","root","Thirumalai_14");
 		Statement st=con.createStatement();
     	String reqBloodGroup = displayAndGet();
-		ResultSet rs = st.executeQuery("select * from bloodbank where bloodgroup='"+reqBloodGroup+"'");
-		ResultSetMetaData rsmd = rs.getMetaData();
-		int i=0;
-		System.out.println("Name\t\tBlood Group\tPhone Number\t\tAddress");
-		while(rs.next()) {
-			System.out.print(rs.getNString("name")+"\t");
-			System.out.print(rs.getNString("bloodgroup")+"\t\t");
-			System.out.print(rs.getLong("phone")+"\t\t");
+    	int len = bloodGroups.length,i=0,j=0,bg=-1;
+    	while(i<len) {
+    		if(bloodGroups[i].equals(reqBloodGroup)) {
+    			bg=i;
+    			break;
+    		}
+    		i++;
+    	}
+		System.out.printf("%-50s %-20s %-20s %-150s","NAME","BLOODGROUP","PHONENUMBER","ADDRESS");
+		System.out.println();
+		int correspondingBloodGroupLen = correspondingBloodGroup[bg].length;
+		while(j<correspondingBloodGroupLen) {
+			displayRelatedBloodGroups(correspondingBloodGroup[bg][j]);
+			j++;
+		}
+		if(count==0) {
+			System.out.printf("\n\n%70s","No Donors Available");
+		}
+    }
+    public void displayRelatedBloodGroups(String bloodGroup) throws Exception {
+    	ExpiryDate ed = new ExpiryDate();
+		Class.forName("com.mysql.cj.jdbc.Driver");
+		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3307/bloodbank","root","Thirumalai_14");
+		Statement st=con.createStatement();
+		ResultSet rs = st.executeQuery("select * from bloodbank where bloodgroup='"+bloodGroup+"'");
+    	while(rs.next()) {
+    		String lastDonated = rs.getDate("lastdonated").toString();
+    		if(ed.checkLastDonated(lastDonated)) {
+			System.out.printf("%-50s ",rs.getNString("name"));
+			System.out.printf("%-20s ",rs.getNString("bloodgroup"));
+			System.out.printf("%-20s ",rs.getLong("phone"));
 			System.out.print(rs.getNString("address")+",");
 			System.out.print(rs.getNString("area")+",");
 			System.out.print(rs.getNString("district")+"-");
 			System.out.print(rs.getLong("pincode")+",");
 			System.out.print(rs.getNString("state")+".");
 			System.out.println();
+			count++;
+    		}
 		}
     }
+    
     public void displayAvailability() throws Exception{
     	ExpiryDate ed = new ExpiryDate();
-    	Class.forName("com.mysql.jdbc.Driver");
-		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3306/test","root","");
+		Class.forName("com.mysql.cj.jdbc.Driver");
+		Connection con=DriverManager.getConnection("jdbc:mysql://localhost:3307/bloodbank","root","Thirumalai_14");
 		Statement st=con.createStatement();
+		Statement st1 = con.createStatement();
+		ResultSet rs1 = st1.executeQuery("select * from threshold");
     	int i=0;
-    	System.out.println("Blood Group\tAvailable Blood in Litres\tAvailable Blood in Units");
-    	while(i<bloodGroups.length) {
+    	System.out.printf("%-20s %-50s %-50s %-50s \n","Blood Group","Available Blood in Litres","Available Blood in Units","Quantity Status");
+    	while(rs1.next()) {
+    	String message="Safe State";
     	double quantity = 0,units=0;
     	int count =0;
 		ResultSet rs = st.executeQuery("select * from bloodbank where bloodgroup='"+bloodGroups[i]+"'");
@@ -159,8 +189,11 @@ public class Donor{
 			quantity += rs.getDouble("quantity");
 			}
 		}
+		if(quantity<=rs1.getDouble("quantity")) {
+			message = "Alert !!!";
+		}
 		units = getUnits(quantity);
-		System.out.println(bloodGroups[i]+"\t\t"+quantity+" L\t\t\t\t"+units+" units");
+		System.out.printf("%-20s %-50s %-50s %-50s \n",bloodGroups[i],quantity+" L",units+" units",message);
 		i++;
     	}
     }
