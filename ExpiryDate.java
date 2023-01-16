@@ -18,7 +18,7 @@ public class ExpiryDate {
 		int currMonth = getCurrMonth(d.getMonth());
 		int currYear = getCurrYear(d.getYear()); 
 		int daysCount = 0,c=0;
-		for(;daysCount<42;date++,daysCount++) {
+		for(;daysCount<35;date++,daysCount++) {
 			switch(month) {
 			case 1:
 			case 3:
