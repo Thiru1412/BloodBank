@@ -1,4 +1,5 @@
-package bloodbank;
+package BloodBank;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.*;
 import java.sql.DriverManager;
@@ -176,12 +177,14 @@ public class Donor{
 		Statement st=con.createStatement();
 		Statement st1 = con.createStatement();
 		ResultSet rs1 = st1.executeQuery("select * from threshold");
+		DecimalFormat df = new DecimalFormat("0.000");
+		df.setRoundingMode(RoundingMode.DOWN);
     	int i=0;
     	System.out.printf("%-20s %-50s %-50s %-50s \n","Blood Group","Available Blood in Litres","Available Blood in Units","Quantity Status");
     	while(rs1.next()) {
     	String message="Safe State";
     	double quantity = 0,units=0;
-    	int count =0;
+    	int count = 0;
 		ResultSet rs = st.executeQuery("select * from bloodbank where bloodgroup='"+bloodGroups[i]+"'");
 		while(rs.next()) {
 			String currDate = rs.getDate("lastdonated").toString();
@@ -193,7 +196,11 @@ public class Donor{
 			message = "Alert !!!";
 		}
 		units = getUnits(quantity);
-		System.out.printf("%-20s %-50s %-50s %-50s \n",bloodGroups[i],quantity+" L",units+" units",message);
+		String quantityString = df.format(quantity);
+		String unitsString = df.format(units);
+		String q = String.valueOf(quantityString);
+		String u = String.valueOf(unitsString);
+		System.out.printf("%-20s %-50s %-50s %-50s \n",bloodGroups[i],q,u,message);
 		i++;
     	}
     }
