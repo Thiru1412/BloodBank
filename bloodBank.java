@@ -46,7 +46,7 @@ public class bloodBank {
 		}
 	}
 	catch(Exception e){
-		System.out.println("Exception : "+e.getMessage());
+		System.out.println("Exception Caught: "+e.getMessage());
 	}
 	}
 }
