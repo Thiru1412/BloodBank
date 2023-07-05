@@ -1,4 +1,4 @@
-package bloodbank;
+package BloodBank;
 
 import java.util.*;
 import java.sql.Connection;
@@ -23,7 +23,7 @@ public class Threshold{
 			ps.execute();
 		}
 
-		System.out.print("Threshold Set Successfully");
+		System.out.print("Threshold Set Successfully !!!");
 	}
 	
 	public void showConfiguration() throws Exception{
